@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Canvas Course Reader</title>
+    <link rel="stylesheet" href="/src/ui/ui.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Canvas Course Reader</h1>
+      <p>Turn a Canvas course export (<code>.imscc</code>) into a stand-alone, read-only website you can open without Canvas.</p>
+    </header>
+
+    <main class="app-main">
+      <section class="card" id="input-card">
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept=".imscc,.zip,application/zip" hidden />
+          <span class="drop-title">Drop a Canvas course export here</span>
+          <span class="drop-sub">or <u>choose a .imscc file</u></span>
+        </label>
+        <p class="privacy">
+          Runs entirely in this browser. Your course file is never uploaded anywhere.
+        </p>
+        <fieldset class="options">
+          <legend>Options</legend>
+          <label><input type="checkbox" id="opt-unpublished" checked /> Include unpublished content (labelled “Unpublished”)</label>
+          <label><input type="checkbox" id="opt-answers" /> Include quiz answer keys <span class="warn">(instructor copy only. Don’t share it with students.)</span></label>
+        </fieldset>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="card" id="result" hidden>
+        <h2 id="course-title"></h2>
+        <ul class="stats" id="stats"></ul>
+        <div class="actions">
+          <button type="button" class="primary" id="download">Download website (.zip)</button>
+          <button type="button" id="preview-open">Preview</button>
+        </div>
+        <p class="hint">Unzip the download and open <code>index.html</code>. It works from a laptop, a USB stick or any web server, with no internet connection needed.</p>
+        <details id="warnings-box" hidden>
+          <summary id="warnings-summary"></summary>
+          <ul id="warnings"></ul>
+        </details>
+      </section>
+
+      <section class="preview" id="preview" hidden>
+        <div class="preview-bar">
+          <button type="button" id="preview-back" title="Back">◂ Back</button>
+          <span id="preview-path"></span>
+          <button type="button" id="preview-close">Close preview</button>
+        </div>
+        <!-- No sandbox attribute: a sandbox without allow-scripts also suppresses the parent's
+             click listeners that drive navigation. Scripts are still blocked: content is
+             DOMPurify-sanitized and every generated page carries script-src 'none'. -->
+        <iframe id="preview-frame" title="Course preview"></iframe>
+      </section>
+    </main>
+    <script type="module" src="/src/ui/main.ts"></script>
+  </body>
+</html>
