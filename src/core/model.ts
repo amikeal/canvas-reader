@@ -147,6 +147,8 @@ export interface Quiz {
   shuffleAnswers?: boolean;
   questions: QuizEntry[];
   assignmentId?: string;
+  /** Graded quizzes embed their assignment (group, publish state, time zone). */
+  assignment?: Assignment;
 }
 
 /** A quiz is a sequence of questions and question groups. */

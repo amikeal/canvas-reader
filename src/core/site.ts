@@ -401,6 +401,22 @@ ${a.externalToolUrl ? html`<div class="cr-notice">${icons.tool} This assignment 
       groupId: d.assignment!.groupId,
       position: d.assignment!.position,
     })),
+    // Graded quizzes (classic and New Quizzes) keep their assignment inside
+    // assessment_meta.xml. Skip any already listed via an assignment_settings resource.
+    ...quizzes
+      .filter((q) => q.assignment && !assignments.some((a) => a.quizId === q.id))
+      .map((q) => ({
+        title: q.title,
+        path: quizPath.get(q.id)!,
+        icon: 'quiz' as IconName,
+        dueAt: q.assignment!.dueAt ?? q.dueAt,
+        tz: q.assignment!.timeZone,
+        allDay: q.assignment!.allDay,
+        points: q.assignment!.points ?? q.points,
+        published: q.published,
+        groupId: q.assignment!.groupId,
+        position: q.assignment!.position,
+      })),
   ];
   const groups = [...course.assignmentGroups];
   const knownGroups = new Set(groups.map((g) => g.id));
@@ -491,6 +507,20 @@ ${d.isAnnouncement ? '' : html`<p class="cr-notice cr-muted">Replies are not inc
         }</li>`,
       )}</ul>`;
     const plain = (s: string) => sanitize(s).textContent ?? '';
+    // Blank/dropdown names. Classic quizzes label each response with its variable
+    // name ("blank1", which also appears in the text as [blank1]). New Quizzes label
+    // it with the ANSWER and use a UUID in the text, so a label is only shown when it
+    // equals the variable name; otherwise blanks are numbered and the text rewritten.
+    let questionText = q.html;
+    const blankName = new Map<string, string>();
+    if (q.type === 'fill_in_multiple_blanks_question' || q.type === 'multiple_dropdowns_question') {
+      q.responses.forEach((r, i) => {
+        const key = r.id.replace(/^response_/, '');
+        const name = r.label === key ? key : `Blank ${i + 1}`;
+        blankName.set(r.id, name);
+        if (name !== key) questionText = questionText.split(`[${key}]`).join(`[${name}]`);
+      });
+    }
     let body: Raw | string = '';
     switch (q.type) {
       case 'essay_question':
@@ -515,23 +545,51 @@ ${d.isAnnouncement ? '' : html`<p class="cr-notice cr-muted">Replies are not inc
         // The "choices" here ARE the accepted answers; never show them without includeAnswers.
         body = html`<table class="cr-match"><tbody>${q.responses.map(
           (r) =>
-            html`<tr><td>[${r.label ?? r.id}]</td><td>${
+            html`<tr><td>[${blankName.get(r.id)}]</td><td>${
               answers ? html`<span class="cr-answers"><strong>Accepted:</strong> ${r.choices.map((c) => plain(c.html)).join(', ')}</span>` : html`<span class="cr-blank"></span>`
             }</td></tr>`,
         )}</tbody></table>`;
         break;
       case 'multiple_dropdowns_question':
-        body = html`${q.responses.map((r) => html`<p class="cr-answers"><strong>[${r.label ?? r.id}]</strong></p>${choiceList(r)}`)}`;
+        body = html`${q.responses.map((r) => html`<p class="cr-answers"><strong>[${blankName.get(r.id)}]</strong></p>${choiceList(r)}`)}`;
         break;
+      case 'categorization_question': {
+        // New Quizzes: one response per category, each listing every item; correct
+        // items per category come from resprocessing.
+        const items = new Map<string, string>();
+        for (const r of q.responses) for (const c of r.choices) if (!items.has(c.id)) items.set(c.id, c.html);
+        const categories = q.responses.map((r) => r.label ?? '').filter(Boolean);
+        body = answers
+          ? html`<table class="cr-match"><tbody>${q.responses.map(
+              (r) =>
+                html`<tr><td><strong>${r.label ?? ''}</strong></td><td>${r.choices
+                  .filter((c) => c.correct)
+                  .map((c) => html`<div>${plain(c.html)}</div>`)}</td></tr>`,
+            )}</tbody></table>`
+          : html`<p class="cr-answers"><strong>Categories:</strong> ${categories.join(' · ')}</p><ul class="cr-choices">${[...items.values()].map(
+              (h) => html`<li><span class="cr-mark"></span><div>${content(h, path)}</div></li>`,
+            )}</ul>`;
+        break;
+      }
+      case 'multiple_choice_question':
+      case 'true_false_question':
+      case 'multiple_answers_question':
+      case 'short_answer_question':
+      case 'numerical_question':
       default: {
+        // Unknown types fail closed: response labels are never shown, because for
+        // some types (see blanks above) the label is the answer.
+        const known = ['multiple_choice_question', 'true_false_question', 'multiple_answers_question', 'short_answer_question', 'numerical_question'];
         const parts = q.responses.map((r) =>
           r.kind === 'choice'
-            ? html`${q.responses.length > 1 && r.label ? html`<p class="cr-answers"><strong>${r.label}</strong></p>` : ''}${choiceList(r)}`
+            ? choiceList(r)
             : html`<p><span class="cr-blank"></span></p>${
                 answers && r.accepted.length ? html`<p class="cr-answers"><strong>Accepted answers:</strong> ${r.accepted.join(' · ')}</p>` : ''
               }`,
         );
-        body = parts.length ? html`${parts}` : html`<p><span class="cr-blank"></span></p>`;
+        body = html`${parts.length ? parts : html`<p><span class="cr-blank"></span></p>`}${
+          known.includes(q.type) ? '' : html`<p class="cr-answers cr-muted">Question type “${q.type.replace(/_/g, ' ')}” is shown in simplified form.</p>`
+        }`;
       }
     }
     const fb = answers
@@ -540,7 +598,7 @@ ${d.isAnnouncement ? '' : html`<p class="cr-notice cr-muted">Replies are not inc
           .map((s) => html`<div class="cr-feedback">${content(s, path)}</div>`)
       : [];
     return html`<section class="cr-question"><header><span>Question ${n}</span><span class="cr-muted">${fmtPoints(q.points)}</span></header>
-<div class="cr-qbody"><div class="cr-content">${content(q.html, path)}</div>${body}${fb}</div></section>`;
+<div class="cr-qbody"><div class="cr-content">${content(questionText, path)}</div>${body}${fb}</div></section>`;
   };
 
   const bankTitle = new Map(course.questionBanks.map((b) => [b.id, b.title]));
@@ -570,7 +628,7 @@ ${d.isAnnouncement ? '' : html`<p class="cr-notice cr-muted">Replies are not inc
     if (q.quizType) rows.push(['Type', QUIZ_TYPES[q.quizType] ?? q.quizType]);
     if (q.points !== undefined) rows.push(['Points', String(q.points)]);
     rows.push(['Questions', String(countQuestions(q.questions))]);
-    if (q.dueAt) rows.push(['Due', when(q.dueAt)]);
+    if (q.dueAt) rows.push(['Due', when(q.dueAt, q.assignment?.timeZone)]);
     if (q.unlockAt || q.lockAt) rows.push(['Available', html`${q.unlockAt ? html`from ${when(q.unlockAt)} ` : ''}${q.lockAt ? html`until ${when(q.lockAt)}` : ''}`]);
     rows.push(['Time limit', q.timeLimit ? `${q.timeLimit} minutes` : 'None']);
     if (q.allowedAttempts !== undefined) rows.push(['Allowed attempts', q.allowedAttempts < 0 ? 'Unlimited' : String(q.allowedAttempts)]);
@@ -694,8 +752,11 @@ ${d.isAnnouncement ? '' : html`<p class="cr-notice cr-muted">Replies are not inc
 
   // ---- syllabus ------------------------------------------------------------
   const summary = [
-    ...assignmentRows.filter((r) => r.icon !== 'quiz'),
-    ...quizzes.map((q) => ({ title: q.title, path: quizPath.get(q.id)!, icon: 'quiz' as IconName, dueAt: q.dueAt, points: q.points, published: q.published })),
+    ...assignmentRows,
+    // Ungraded/practice quizzes have no assignment row; add them once.
+    ...quizzes
+      .filter((q) => !assignmentRows.some((r) => r.path === quizPath.get(q.id)))
+      .map((q) => ({ title: q.title, path: quizPath.get(q.id)!, icon: 'quiz' as IconName, dueAt: q.dueAt, points: q.points, published: q.published })),
   ].sort((a, b) => {
     const da = parseCanvasDate(a.dueAt)?.getTime() ?? Infinity;
     const db = parseCanvasDate(b.dueAt)?.getTime() ?? Infinity;

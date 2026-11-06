@@ -70,7 +70,10 @@ describe('parseCartridge', () => {
       published: true,
     });
     expect(a.html).toContain('Write 500 words');
-    expect(c.assignmentGroups).toEqual([{ id: 'ggroup1', title: 'Papers', position: 1, weight: 40 }]);
+    expect(c.assignmentGroups).toEqual([
+      { id: 'ggroup1', title: 'Papers', position: 1, weight: 40 },
+      { id: 'gquizgroup', title: 'Quizzes', position: 2, weight: undefined },
+    ]);
   });
 
   it('separates announcements from discussions and keeps graded discussion data', async () => {
@@ -110,7 +113,7 @@ describe('parseCartridge', () => {
 
   it('parses classic quizzes including question groups', async () => {
     const c = await course();
-    const q = c.quizzes[0]!;
+    const q = c.quizzes.find((x) => x.id === 'gquiz1')!;
     expect(q).toMatchObject({ id: 'gquiz1', title: 'Quiz 1', points: 5, timeLimit: 30, published: true, assignmentId: 'gquizasg' });
     expect(q.questions.map((e) => e.kind)).toEqual(['question', 'group']);
     const g = q.questions[1]!;

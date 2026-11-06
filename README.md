@@ -18,13 +18,22 @@ website: a backup that faculty can open when Canvas is unavailable.
 | Assignments (due/points/submission types) | `<id>/assignment_settings.xml` + HTML |
 | Announcements, discussions (incl. graded) | `imsdt` topic XML + `topicMeta` |
 | Files | `web_resources/**` |
-| Classic quizzes, question banks | `<id>/assessment_meta.xml`, `non_cc_assessments/*.qti` (QTI 1.2) |
+| Classic quizzes, New Quizzes, question banks | `<id>/assessment_meta.xml`, `non_cc_assessments/*.qti` (QTI 1.2) |
 | Syllabus + course summary, assignment groups, nav tabs | `course_settings/*` |
 | External links; LTI tools (as "requires Canvas" stubs) | `imswl`, `lti_resource_links/` |
 
 Canvas course exports never contain **student submissions, grades, rosters or discussion
 replies**. Rubrics, calendar events and outcomes are reported as warnings but not rendered yet.
-New Quizzes are not handled.
+
+New Quizzes are exported in the classic QTI layout. Three quirks of that export are handled:
+- `assessment_meta.xml` has a whitespace-containing `xmlns:xsi`, which browsers reject. It's
+  repaired before parsing.
+- `<available>false</available>` appears even on published quizzes, so the embedded
+  assignment's publish state wins.
+- Fill-in-the-blank responses are labelled with the answer itself, so labels are never shown
+  for blanks.
+
+Question types this tool doesn't recognize are rendered without response labels.
 
 ## Options
 

@@ -329,6 +329,11 @@ export function parseCartridge(archive: Archive, initialWarnings: string[] = [])
       readQti(`non_cc_assessments/${id}.xml.qti`)?.assessments.get(id) ??
       readQti(`${dir}/assessment_qti.xml`)?.assessments.values().next().value;
     const asgEl = kid(el, 'assignment');
+    // Graded quizzes (including New Quizzes) carry their assignment here, not as an
+    // assignment_settings.xml resource; it holds the assignment group and publish state.
+    const assignment = asgEl ? parseAssignmentEl(asgEl, asgEl.getAttribute('identifier') ?? `${id}-assignment`, '') : undefined;
+    // New Quizzes export <available>false</available> even when published, so the
+    // assignment's workflow_state wins when present.
     const available = bool(el, 'available');
     quizzes.push({
       id,
@@ -342,9 +347,10 @@ export function parseCartridge(archive: Archive, initialWarnings: string[] = [])
       unlockAt: text(el, 'unlock_at'),
       lockAt: text(el, 'lock_at'),
       shuffleAnswers: bool(el, 'shuffle_answers'),
-      published: available ?? (text(el, 'workflow_state') ?? 'active') !== 'unpublished',
+      published: assignment?.published ?? available ?? (text(el, 'workflow_state') ?? 'active') !== 'unpublished',
       questions: qti?.entries ?? [],
-      assignmentId: asgEl?.getAttribute('identifier') ?? undefined,
+      assignmentId: assignment?.id,
+      assignment,
     });
     if (!qti) warnings.push(`Quiz "${text(el, 'title') ?? id}": no question data found.`);
   }

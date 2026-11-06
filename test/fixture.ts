@@ -181,12 +181,62 @@ const QUIZ_META = `<?xml version="1.0" encoding="UTF-8"?>
   <assignment identifier="gquizasg"><title>Quiz 1</title></assignment>
 </quiz>`;
 
+// New Quizzes export shape (verified against a real export): malformed xmlns:xsi
+// that browsers reject, <available>false</available> despite a published assignment,
+// questions only in non_cc_assessments, fill-in-blank labels that ARE the answers.
+const NEWQ_META = `<?xml version="1.0"?>
+<quiz xmlns="http://canvas.instructure.com/xsd/cccv1p0" xmlns:xsi="http://canvas.instructure.com/xsd/cccv1p0 https://canvas.instructure.com/xsd/cccv1p0.xsd" identifier="gnewq1">
+  <title>New Quiz 1</title><description/>
+  <due_at>2024-01-30T22:20:00Z</due_at>
+  <quiz_type>assignment</quiz_type><points_possible>10.0</points_possible>
+  <available>false</available>
+  <assignment identifier="gnewqasg">
+    <title>New Quiz 1</title><due_at>2024-01-30T22:20:00Z</due_at>
+    <workflow_state>published</workflow_state>
+    <quiz_identifierref>gnewq1</quiz_identifierref>
+    <points_possible>10.0</points_possible>
+    <assignment_group_identifierref>gquizgroup</assignment_group_identifierref>
+    <submission_types>online_quiz</submission_types><position>1</position>
+  </assignment>
+</quiz>`;
+
+const NEWQ_QTI = `<?xml version="1.0"?>
+<questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2">
+  <assessment ident="gnewq1" title="New Quiz 1" external_assignment_id="2032078">
+    <section ident="root_section">
+      <item ident="nq-fib" title="">
+        <itemmetadata><qtimetadata><qtimetadatafield><fieldlabel>question_type</fieldlabel><fieldentry>fill_in_multiple_blanks_question</fieldentry></qtimetadatafield></qtimetadata></itemmetadata>
+        <presentation><material><mattext texttype="text/html">&lt;p&gt;GPT stands for [dc1a0e7e-fe3b-4be5-85d9-11d267307216] Pre-trained Transformer&lt;/p&gt;</mattext></material>
+          <response_lid ident="response_dc1a0e7e-fe3b-4be5-85d9-11d267307216"><material><mattext>SECRETBLANK</mattext></material>
+            <render_choice><response_label ident="dc1a0e7e-fe3b-4be5-85d9-11d267307216-0" answer_type="openEntry"><material><mattext texttype="text/plain">SECRETBLANK</mattext></material></response_label></render_choice>
+          </response_lid></presentation>
+        <resprocessing><respcondition><conditionvar><varequal respident="response_dc1a0e7e-fe3b-4be5-85d9-11d267307216">dc1a0e7e-fe3b-4be5-85d9-11d267307216-0</varequal></conditionvar><setvar varname="SCORE" action="Add">100</setvar></respcondition></resprocessing>
+      </item>
+      <item ident="nq-cat" title="">
+        <itemmetadata><qtimetadata><qtimetadatafield><fieldlabel>question_type</fieldlabel><fieldentry>categorization_question</fieldentry></qtimetadatafield></qtimetadata></itemmetadata>
+        <presentation><material><mattext texttype="text/html">Sort these</mattext></material>
+          <response_lid ident="cat-ml" rcardinality="Multiple"><material><mattext texttype="text/plain">ML</mattext></material><render_choice>
+            <response_label ident="i1"><material><mattext texttype="text/plain">Learns from data</mattext></material></response_label>
+            <response_label ident="i2"><material><mattext texttype="text/plain">Senses and acts</mattext></material></response_label></render_choice></response_lid>
+          <response_lid ident="cat-ai" rcardinality="Multiple"><material><mattext texttype="text/plain">AI</mattext></material><render_choice>
+            <response_label ident="i1"><material><mattext texttype="text/plain">Learns from data</mattext></material></response_label>
+            <response_label ident="i2"><material><mattext texttype="text/plain">Senses and acts</mattext></material></response_label></render_choice></response_lid>
+        </presentation>
+        <resprocessing>
+          <respcondition><conditionvar><varequal respident="cat-ml">i1</varequal></conditionvar><setvar action="Add" varname="SCORE">50</setvar></respcondition>
+          <respcondition><conditionvar><varequal respident="cat-ai">i2</varequal></conditionvar><setvar action="Add" varname="SCORE">50</setvar></respcondition>
+        </resprocessing>
+      </item>
+    </section>
+  </assessment>
+</questestinterop>`;
+
 export function fixtureFiles(): Record<string, string | Uint8Array> {
   return {
     'imsmanifest.xml': MANIFEST,
     'course_settings/course_settings.xml': COURSE_SETTINGS,
     'course_settings/module_meta.xml': MODULE_META,
-    'course_settings/assignment_groups.xml': `<?xml version="1.0"?><assignmentGroups ${CCC}><assignmentGroup identifier="ggroup1"><title>Papers</title><position>1</position><group_weight>40.0</group_weight></assignmentGroup></assignmentGroups>`,
+    'course_settings/assignment_groups.xml': `<?xml version="1.0"?><assignmentGroups ${CCC}><assignmentGroup identifier="ggroup1"><title>Papers</title><position>1</position><group_weight>40.0</group_weight></assignmentGroup><assignmentGroup identifier="gquizgroup"><title>Quizzes</title><position>2</position></assignmentGroup></assignmentGroups>`,
     'course_settings/grading_standards.xml': `<?xml version="1.0"?><gradingStandards ${CCC}><gradingStandard identifier="gs1"><title>Letters</title><data>[["A",0.9],["B",0.8],["F",0]]</data><points_based>false</points_based></gradingStandard></gradingStandards>`,
     'course_settings/files_meta.xml': `<?xml version="1.0"?><fileMeta ${CCC}><folders><folder path="Uploaded Media"><hidden>true</hidden></folder></folders></fileMeta>`,
     'course_settings/rubrics.xml': `<?xml version="1.0"?><rubrics ${CCC}/>`,
@@ -213,6 +263,9 @@ export function fixtureFiles(): Record<string, string | Uint8Array> {
     'non_cc_assessments/gquiz1.xml.qti': QUIZ_QTI,
     'gquiz1/assessment_meta.xml': QUIZ_META,
     'gquiz1/assessment_qti.xml': QUIZ_QTI,
+    'gnewq1/assessment_meta.xml': NEWQ_META,
+    'gnewq1/assessment_qti.xml': `<?xml version="1.0"?><questestinterop xmlns="http://www.imsglobal.org/xsd/ims_qtiasiv1p2"><assessment ident="gnewq1" title="New Quiz 1"><section ident="root_section"/></assessment></questestinterop>`,
+    'non_cc_assessments/gnewq1.xml.qti': NEWQ_QTI,
     'weird.xml': '<x/>',
   };
 }

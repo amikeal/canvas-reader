@@ -8,8 +8,22 @@ export function decode(bytes: Uint8Array): string {
   return decoder.decode(bytes);
 }
 
+/**
+ * Canvas's New Quizzes exporter writes namespace declarations like
+ *   xmlns:xsi="http://canvas.instructure.com/xsd/cccv1p0 https://.../cccv1p0.xsd"
+ * (a schemaLocation pasted into xmlns). Browsers (libxml2) reject a namespace URI
+ * containing whitespace as a fatal error; jsdom accepts it. We only read local
+ * names, so keep the first token. Applied unconditionally so that tests (jsdom)
+ * exercise the same input the browser parses.
+ */
+export function repairXml(source: string): string {
+  return source.replace(/(\sxmlns(?::[A-Za-z_][\w.-]*)?\s*=\s*)(["'])([^"']*)\2/g, (m, prefix: string, q: string, value: string) =>
+    /\s/.test(value.trim()) || value !== value.trim() ? `${prefix}${q}${value.trim().split(/\s+/)[0]}${q}` : m,
+  );
+}
+
 export function parseXml(source: string, label = 'XML'): Document {
-  const doc = new DOMParser().parseFromString(source, 'application/xml');
+  const doc = new DOMParser().parseFromString(repairXml(source), 'application/xml');
   const err = doc.getElementsByTagName('parsererror')[0];
   if (err) throw new Error(`${label}: XML parse error: ${(err.textContent ?? '').slice(0, 200)}`);
   return doc;
