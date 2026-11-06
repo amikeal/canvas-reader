@@ -49,6 +49,9 @@ function contentSecurityPolicy(): Plugin {
 // emailed, put on a USB stick, or opened from disk with no server.
 export default defineConfig({
   plugins: [viteSingleFile(), contentSecurityPolicy()],
+  // File-change events don't cross the container bind mount, so the dev server
+  // would keep serving stale modules. scripts/ctr sets VITE_POLL=1.
+  server: { watch: process.env.VITE_POLL === '1' ? { usePolling: true, interval: 300 } : undefined },
   build: {
     target: 'es2022',
     assetsInlineLimit: Number.MAX_SAFE_INTEGER,

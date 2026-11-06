@@ -10,7 +10,7 @@ if ! container image inspect "$IMAGE" >/dev/null 2>&1; then
   container build -t "$IMAGE" -f Containerfile . >&2
 fi
 # The default resolver (gateway) does not answer on some hosts; override with CTR_DNS.
-args=(--rm -v "$PWD":/app -w /app --dns "${CTR_DNS:-1.1.1.1}")
+args=(--rm -v "$PWD":/app -w /app --dns "${CTR_DNS:-1.1.1.1}" -e VITE_POLL=1)
 [[ -n "${PORT:-}" ]] && args+=(-p "${PORT}:5173")
 [[ -t 0 && -t 1 ]] && args+=(-it)
 exec container run "${args[@]}" "$IMAGE" "$@"
