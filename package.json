@@ -1,0 +1,28 @@
+{
+  "name": "canvas-reader",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Convert a Canvas LMS course export (.imscc) into a stand-alone, read-only static website.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "convert": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.6",
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^22.15.0",
+    "jsdom": "^26.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0",
+    "vite": "^7.0.0",
+    "vite-plugin-singlefile": "^2.3.0",
+    "vitest": "^3.2.0"
+  }
+}
