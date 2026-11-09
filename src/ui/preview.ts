@@ -1,6 +1,9 @@
 // In-page preview of the generated site without writing anything to disk.
-// Pages are loaded into a sandboxed srcdoc iframe (no scripts); site-internal links
-// are intercepted and non-HTML files are served from blob: URLs.
+// Pages are loaded into a srcdoc iframe; site-internal links are intercepted and
+// non-HTML files are served from blob: URLs. The iframe is deliberately NOT sandboxed:
+// a sandbox without allow-scripts also blocks the click handler below. Scripts still
+// can't run, because page content is sanitized and every generated page carries a
+// script-src 'none' CSP.
 
 const decoder = new TextDecoder();
 
