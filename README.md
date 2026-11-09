@@ -19,48 +19,58 @@ website: a backup that faculty can open when Canvas is unavailable.
 
 Both screenshots use the synthetic test course from `test/fixture.ts`, not real course content.
 
-## What's in a Canvas export (and what isn't)
+> **Maintaining or extending this?** Read [ARCHITECTURE.md](ARCHITECTURE.md) for the design
+> decisions, Canvas export quirks, security model and known gaps. Coding agents also get
+> [CLAUDE.md](CLAUDE.md).
 
-| Rendered | Source in the archive |
+## How to use it
+
+1. In Canvas, go to **Settings → Export Course Content → Course**, and download the `.imscc`
+   when it's ready. Exports may also arrive automatically from
+   [canvas-exporter](https://github.com/amikeal/canvas-exporter).
+2. Open the converter (`dist/index.html`, or the hosted copy) and drop the file in.
+3. Check the summary and any notes, click **Preview** to browse, then **Download website
+   (.zip)**.
+4. Unzip it anywhere and open `index.html`.
+
+Don't put generated sites on a public web server. They contain copyrighted course material,
+and instructor copies contain answer keys.
+
+## What's included (and what isn't)
+
+| Rendered | |
 |---|---|
-| Modules (order, indent, sub-headers, publish state) | `course_settings/module_meta.xml` |
-| Pages, front page | `wiki_content/*.html` |
-| Assignments (due/points/submission types) | `<id>/assignment_settings.xml` + HTML |
-| Announcements, discussions (incl. graded) | `imsdt` topic XML + `topicMeta` |
-| Files | `web_resources/**` |
-| Classic quizzes, New Quizzes, question banks | `<id>/assessment_meta.xml`, `non_cc_assessments/*.qti` (QTI 1.2) |
-| Syllabus + course summary, assignment groups, nav tabs | `course_settings/*` |
-| External links; LTI tools (as "requires Canvas" stubs) | `imswl`, `lti_resource_links/` |
+| Modules | order, indents, sub-headers, publish state, previous/next navigation |
+| Pages | including the front page |
+| Assignments | due dates, points, submission types, assignment groups and their weights |
+| Announcements and discussions | including graded discussions |
+| Files | copied byte-for-byte; PDFs open in the browser |
+| Quizzes | classic quizzes, New Quizzes and question banks |
+| Syllabus | with the course summary; course navigation tabs as in Canvas |
+| External links | linked; LTI tools appear as "requires Canvas" stubs |
 
 Canvas course exports never contain **student submissions, grades, rosters or discussion
-replies**. Rubrics, calendar events and outcomes are reported as warnings but not rendered yet.
+replies**. Rubrics, calendar events and outcomes are reported in the conversion notes but not
+rendered yet. Links to Canvas features that don't exist offline are shown as unavailable.
 
-New Quizzes are exported in the classic QTI layout. Three quirks of that export are handled:
-- `assessment_meta.xml` has a whitespace-containing `xmlns:xsi`, which browsers reject. It's
-  repaired before parsing.
-- `<available>false</available>` appears even on published quizzes, so the embedded
-  assignment's publish state wins.
-- Fill-in-the-blank responses are labelled with the answer itself, so labels are never shown
-  for blanks.
-
-Question types this tool doesn't recognize are rendered without response labels.
+Due dates are shown in the instructor's time zone from the export, not the viewer's.
 
 ## Options
 
 - **Include unpublished content** (default on): unpublished items are shown with a badge.
-- **Include quiz answer keys** (default off): this produces an *instructor copy*. QTI exports
-  contain the correct answers, so a copy made with this option must not be given to students.
+- **Include quiz answer keys** (default off): this produces an *instructor copy*
+  (`*-instructor.zip`). QTI exports contain the correct answers, so a copy made with this
+  option must not be given to students.
 
-## Security notes
+## Privacy and safety
 
-- ZIP input: entry paths are normalized; `..`, absolute paths and drive letters are rejected
-  (zip-slip). Entry count and declared sizes are capped.
-- Course HTML is sanitized with DOMPurify: no scripts, event handlers, forms, `data-*`
-  attributes or `object`/`embed`. Only `https:` iframes are kept, and they are sandboxed.
-  Every generated page also carries a `script-src 'none'` CSP.
-- XML is parsed with `DOMParser`, which does not resolve external entities.
-- Uploaded course files (`web_resources/`) are copied as-is. An uploaded `.html` file in the
-  course is served by the generated site like any other file.
+- The course file is processed entirely in your browser and is never uploaded. The page's
+  security policy blocks all network requests.
+- Course HTML is sanitized, and generated pages can't run scripts. Embedded videos load from
+  their sites when you're online.
+- Files that were uploaded to the course are copied unchanged.
+
+Details are in [ARCHITECTURE.md §5](ARCHITECTURE.md#5-security-model).
 
 ## Development
 
@@ -75,9 +85,9 @@ PORT=5173 scripts/ctr npm run dev         # http://localhost:5173
 scripts/ctr npx tsx src/cli.ts out/course.imscc out/site/ [--answers] [--no-unpublished]
 ```
 
-`scripts/ctr` sets `--dns 1.1.1.1` because the default container resolver doesn't answer on some
-hosts. Override it with `CTR_DNS`. Bind mounts outside the repo, such as `~/Downloads`, can hang the
-runtime on a macOS privacy prompt, so copy inputs into `out/` (gitignored) first.
+Copy real exports into `out/` (gitignored) before converting them; never commit them. Tests use
+a synthetic cartridge (`test/fixture.ts`). Environment notes are in
+[ARCHITECTURE.md §6](ARCHITECTURE.md#6-development-and-testing).
 
-Tests use a synthetic cartridge built in memory (`test/fixture.ts`), so no real course content
-is committed.
+To update the hosted converter, build, then drag `dist/` onto the Netlify site's **Deploys**
+tab ([ARCHITECTURE.md §8](ARCHITECTURE.md#8-deployment)).
