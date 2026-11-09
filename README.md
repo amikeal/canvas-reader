@@ -9,6 +9,16 @@ website: a backup that faculty can open when Canvas is unavailable.
 - **Output:** plain multi-page HTML with relative links and no JavaScript. Unzip it and open
   `index.html` from disk, a USB stick, or any web server.
 
+![The converter after loading a course export: course summary, download button and preview](docs/screenshots/converter.png)
+
+*The converter after loading an export.*
+
+![The Modules page of a generated site, laid out like Canvas](docs/screenshots/site-modules.png)
+
+*A page of the generated site, opened from disk.*
+
+Both screenshots use the synthetic test course from `test/fixture.ts`, not real course content.
+
 ## What's in a Canvas export (and what isn't)
 
 | Rendered | Source in the archive |
