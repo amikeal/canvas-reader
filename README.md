@@ -19,9 +19,9 @@ website: a backup that faculty can open when Canvas is unavailable.
 
 Both screenshots use the synthetic test course from `test/fixture.ts`, not real course content.
 
-> **Maintaining or extending this?** Read [ARCHITECTURE.md](ARCHITECTURE.md) for the design
-> decisions, Canvas export quirks, security model and known gaps. Coding agents also get
-> [CLAUDE.md](CLAUDE.md).
+> **Maintaining or extending this?** [ARCHITECTURE.md](ARCHITECTURE.md) covers building,
+> testing and deploying, plus the design decisions, Canvas export quirks, security model and
+> known gaps. Coding agents also get [CLAUDE.md](CLAUDE.md).
 
 ## How to use it
 
@@ -71,23 +71,3 @@ Due dates are shown in the instructor's time zone from the export, not the viewe
 - Files that were uploaded to the course are copied unchanged.
 
 Details are in [ARCHITECTURE.md §5](ARCHITECTURE.md#5-security-model).
-
-## Development
-
-Everything runs in a container (Apple `container`) with the repo bind-mounted. Don't run npm on
-the host, because `node_modules` contains Linux binaries.
-
-```bash
-scripts/ctr npm ci
-scripts/ctr npm test
-scripts/ctr npm run build                 # -> dist/index.html
-PORT=5173 scripts/ctr npm run dev         # http://localhost:5173
-scripts/ctr npx tsx src/cli.ts out/course.imscc out/site/ [--answers] [--no-unpublished]
-```
-
-Copy real exports into `out/` (gitignored) before converting them; never commit them. Tests use
-a synthetic cartridge (`test/fixture.ts`). Environment notes are in
-[ARCHITECTURE.md §6](ARCHITECTURE.md#6-development-and-testing).
-
-To update the hosted converter, build, then drag `dist/` onto the Netlify site's **Deploys**
-tab ([ARCHITECTURE.md §8](ARCHITECTURE.md#8-deployment)).

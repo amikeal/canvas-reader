@@ -277,6 +277,17 @@ instructor copies contain answer keys. This belongs in faculty guidance.
 
 ## 6. Development and testing
 
+```bash
+scripts/ctr npm ci
+scripts/ctr npm test                      # Vitest + jsdom
+scripts/ctr npm run build                 # -> dist/index.html (single file, CSP injected)
+PORT=5173 scripts/ctr npm run dev         # http://localhost:5173 (no CSP in dev)
+scripts/ctr npx tsx src/cli.ts out/course.imscc out/site/ [--answers] [--no-unpublished]
+```
+
+Copy real exports into `out/` (gitignored) before converting them, and never commit them.
+Deploying is covered in [§8](#8-deployment).
+
 - **Container only:** `scripts/ctr` runs commands in `canvas-reader-dev` (Node 24, Debian)
   with the repo bind-mounted. `node_modules` holds Linux binaries, so never run npm on the
   host.
