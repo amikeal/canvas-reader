@@ -9,6 +9,9 @@ website: a backup that faculty can open when Canvas is unavailable.
 - **Output:** plain multi-page HTML with relative links and no JavaScript. Unzip it and open
   `index.html` from disk, a USB stick, or any web server.
 
+**See it running live: [canvas-reader.netlify.app](https://canvas-reader.netlify.app).** It's the
+same single file, and your course export still never leaves your computer.
+
 ![The converter after loading a course export: course summary, download button and preview](docs/screenshots/converter.png)
 
 *The converter after loading an export.*
@@ -28,7 +31,8 @@ Both screenshots use the synthetic test course from `test/fixture.ts`, not real 
 1. In Canvas, go to **Settings → Export Course Content → Course**, and download the `.imscc`
    when it's ready. Exports may also arrive automatically from
    [canvas-exporter](https://github.com/amikeal/canvas-exporter).
-2. Open the converter (`dist/index.html`, or the hosted copy) and drop the file in.
+2. Open the converter ([the hosted copy](https://canvas-reader.netlify.app), or a local
+   `dist/index.html`) and drop the file in.
 3. Check the summary and any notes, click **Preview** to browse, then **Download website
    (.zip)**.
 4. Unzip it anywhere and open `index.html`.

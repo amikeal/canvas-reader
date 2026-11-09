@@ -72,5 +72,5 @@ container runtime.
   serves stale modules through the bind mount.
 - **Deploying:** build, then drag `dist/` onto the Netlify site's **Deploys** tab (not the Drop
   page, which creates a new site). Deploy only the tested build.
-- **The live site is behind `main`** (missing the New Quizzes answer-leak fix) until someone
-  redeploys.
+- **The live site only updates by hand.** After a change that affects `dist/`, tell the owner
+  it needs redeploying, and treat a stale deploy of a security fix as urgent.

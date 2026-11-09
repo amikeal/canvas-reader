@@ -6,8 +6,8 @@ for whoever maintains or extends the tool next, human or coding agent.
 
 `README.md` is the user's guide. This file is the design record.
 
-Status (November 2026): working and deployed at https://canvas-reader.netlify.app. That
-deployment is **out of date** ([§8](#8-deployment)).
+Status (November 2026): working and deployed at https://canvas-reader.netlify.app. The
+deployment matches `main` ([§8](#8-deployment)).
 
 ---
 
@@ -346,8 +346,10 @@ All are fixed in `533f31e` ([§3.1](#31-new-quizzes-quirks)).
 - **To update:** run `scripts/ctr npm run build`, then drag `dist/` onto the existing site's
   **Deploys** tab. Dropping on the Drop page again creates a second site. If the site is ever
   connected to this repo instead, it needs a build step, because `dist/` isn't committed.
-- **⚠ Outstanding:** the live site was deployed **before** `533f31e` and still has the New
-  Quizzes fill-in-the-blank **answer leak**. Redeploy `dist/`.
+- **Current:** redeployed by the owner on 2026-11-09. The live page was checked
+  byte-for-byte against a fresh build of `main` (`a0f60be`); it is identical apart from
+  Netlify's injected HUD line, and includes the New Quizzes answer-leak fix. **After any change
+  that affects `dist/`, redeploy**; the site only updates by hand.
 - **Netlify's HUD script:** Netlify injects
   `<script async src="/.netlify/scripts/hud?variant=public">` on free-tier sites. The page's
   CSP blocks it (one console error per load); this is harmless and shows the CSP working.
